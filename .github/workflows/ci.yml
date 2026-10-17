@@ -23,7 +23,7 @@ jobs:
       - name: Clash Verge JavaScript contract tests
         run: node tests/test_override.js
       - name: Shell syntax
-        run: bash -n install.sh uninstall.sh
+        run: bash -n install.sh upgrade.sh uninstall.sh
   client-core:
     name: Validate real client cores
     runs-on: ubuntu-latest
