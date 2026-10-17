@@ -18,5 +18,9 @@ jobs:
         run: python -m compileall -q autonode tests
       - name: Unit tests
         run: python -m unittest discover -s tests -v
+      - name: Clash Verge JavaScript syntax
+        run: node --check clients/clash-verge/override.js
+      - name: Clash Verge JavaScript contract tests
+        run: node tests/test_override.js
       - name: Shell syntax
         run: bash -n install.sh uninstall.sh
