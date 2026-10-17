@@ -129,12 +129,12 @@ def singbox_route() -> dict:
             {
                 "tag": "kejishu_cn_domain", "type": "remote", "format": "binary",
                 "url": SRS_GEOSITE + "geosite-cn.srs",
-                "download_detour": "AutoNode", "update_interval": "1d",
+                "http_client": {"detour": "AutoNode"}, "update_interval": "1d",
             },
             {
                 "tag": "kejishu_cn_ip", "type": "remote", "format": "binary",
                 "url": SRS_GEOIP + "geoip-cn.srs",
-                "download_detour": "AutoNode", "update_interval": "1d",
+                "http_client": {"detour": "AutoNode"}, "update_interval": "1d",
             },
         ],
         "final": "AutoNode",
