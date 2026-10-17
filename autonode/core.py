@@ -9,6 +9,9 @@ import secrets
 import uuid
 from urllib.parse import quote
 
+from .routing import (PROXY_GROUP, mihomo_dns_lines, mihomo_provider_lines,
+                      mihomo_rules, singbox_route)
+
 
 _NAME = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}$")
 _HOST = re.compile(r"^(?=.{1,253}$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$")
@@ -133,11 +136,11 @@ def base64_subscription(state: dict, name: str) -> str:
 
 
 def mihomo_config(state: dict, name: str) -> str:
-    """为 Clash Verge Rev/Mihomo 生成 YAML；JSON 引号同样是合法 YAML 字符串。"""
+    """生成完整的 Mihomo 分流订阅：DNS、远程规则、国内直连、海外代理。"""
     user = user_state(state, name)
     label = f"AutoNode-{name}"
     q = lambda item: json.dumps(item, ensure_ascii=True)
-    return "\n".join([
+    lines = [
         "mixed-port: 7890", "allow-lan: false", "mode: rule", "log-level: warning",
         "proxies:", f"  - name: {q(label)}", "    type: vless",
         f"    server: {q(state['host'])}", f"    port: {state['node_port']}",
@@ -146,9 +149,14 @@ def mihomo_config(state: dict, name: str) -> str:
         f"    servername: {q(state['sni'])}", "    reality-opts:",
         f"      public-key: {q(state['public_key'])}",
         f"      short-id: {q(state['short_id'])}",
-        "proxy-groups:", "  - name: AutoNode", "    type: select", "    proxies:",
-        f"      - {q(label)}", "      - DIRECT", "rules:", "  - MATCH,AutoNode", "",
-    ])
+        "proxy-groups:", f"  - name: {q(PROXY_GROUP)}", "    type: select",
+        "    proxies:", f"      - {q(label)}", "      - DIRECT",
+    ]
+    lines.extend(mihomo_dns_lines())
+    lines.extend(mihomo_provider_lines())
+    lines.append("rules:")
+    lines.extend(f"  - {q(rule)}" for rule in mihomo_rules())
+    return "\n".join(lines) + "\n"
 
 
 def singbox_config(state: dict, name: str) -> dict:
@@ -167,6 +175,8 @@ def singbox_config(state: dict, name: str) -> dict:
                             "short_id": state["short_id"]}
             }
         }, {"type": "direct", "tag": "direct"}],
+        "route": singbox_route(),
+        "experimental": {"cache_file": {"enabled": True}},
     }
 
 
