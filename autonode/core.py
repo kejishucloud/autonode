@@ -156,7 +156,7 @@ def mihomo_config(state: dict, name: str) -> str:
     lines.extend(mihomo_provider_lines())
     lines.append("rules:")
     lines.extend(f"  - {q(rule)}" for rule in mihomo_rules())
-    return "\\n".join(lines) + "\\n"
+    return "\n".join(lines) + "\n"
 
 
 def singbox_config(state: dict, name: str) -> dict:
