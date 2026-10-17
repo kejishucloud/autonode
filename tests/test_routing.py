@@ -52,7 +52,7 @@ class RoutingContractTest(unittest.TestCase):
     def test_private_ipv4_ipv6(self):
         rules = mihomo_rules()
         for network in ("192.168.0.0/16", "10.0.0.0/8", "fc00::/7", "fe80::/10"):
-            self.assertIn(f"IP-CIDR,{network},DIRECT,no-resolve", rules)
+            self.assertIn(f"{'IP-CIDR6' if ':' in network else 'IP-CIDR'},{network},DIRECT,no-resolve", rules)
 
     def test_mrs_providers(self):
         providers = mihomo_rule_providers()

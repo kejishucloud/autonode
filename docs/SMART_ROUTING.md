@@ -50,14 +50,11 @@ Mihomo 为 DNS 配置 `fallback-filter.geoip: true`；若海外服务使用了�
 
 ```bash
 git pull --ff-only
-sudo cp -a /opt/autonode "/opt/autonode.backup.$(date +%Y%m%d%H%M%S)"
-sudo cp -a autonode/. /opt/autonode/autonode/
-sudo python3 -m compileall -q /opt/autonode/autonode
-sudo systemctl restart autonode-sub
+sudo bash upgrade.sh
 sudo systemctl status autonode-sub --no-pager
 ```
 
-上述指令应在代码已进入默认分支、并在仓库根目录时执行；如果通过 PR 尚未合并，请先检查对应分支和代码版本。不需要改 VPS 的 sing-box 入站节点或重建密钥。**执行升级前务必保留原 `/opt/autonode` 和 `/etc/autonode` 备份；当前升级仅更新订阅输出逻辑。**
+升级器在仓库根目录执行离线测试，在目标机器备份 `/opt/autonode/autonode` 和 `/etc/autonode`，验证实际用户订阅可以生成，切换模块并重启订阅服务；健康检查失败则回滚原代码。它不会重建 sing-box 入站节点、REALITY 密钥或用户 token。
 
 重启订阅服务后，客户端手动更新订阅。服务端已部署成功，并不代表每个客户端都已重载新路由。
 
@@ -103,7 +100,7 @@ Base64 VLESS 订阅只包含节点 URI、UUID、REALITY 参数。**它不能直�
 - v2rayN / v2rayNG：选择路由模式或创建自定义 routing 规则，域名集 `geosite:cn`、IP 集 `geoip:cn` 和 `geoip:private` DIRECT，海外服务指定代理出站，最终缺省出站走代理。不同版本的导入语法不同，不要把 Mihomo MRS 文件直接导入 Xray 路由。
 - Shadowrocket：在 **配置 / 规则** 中将 LAN、国内域/IP 设为 DIRECT，国外服务和 FINAL 设为节点；使用客户端支持的规则订阅格式并独立更新。Shadowrocket 不会自动读取 Python 中生成的 Mihomo YAML。
 
-这里的规则管理仅规定策略，不声称客户端已自动接管这些设置。此限制来自不同客户端的订阅格式差异。
+仓库提供 [v2rayN/Xray 路由配置](../clients/v2rayn/routing.json)（客户端的代理出站标签应为 `proxy`）和 [Shadowrocket 规则模板](../clients/shadowrocket/kejishu.conf)；用户在对应客户端导入配置即可，无需手动逐条录入。**Base64 VLESS 节点本身不会自动携带路由模板。**
 
 ## 8. Cloudflare 与“国内不挂代理无法更新订阅”
 
@@ -128,6 +125,7 @@ Cloudflare 普通 CDN HTTP 代理**不能**透明加速原生 VLESS + REALITY TC
 # 本地仓库：无第三方 Python 依赖
 python3 -m unittest discover -s tests -v
 python3 -m compileall -q autonode tests
+bash -n install.sh upgrade.sh uninstall.sh
 node --check clients/clash-verge/override.js
 node tests/test_override.js
 
@@ -161,3 +159,8 @@ sing-box check -c /path/to/client.json
 3. 可为每个订阅增加可选分流档位（默认智能、全局、直连）；但要维持单一用户 URL 契约，避免强制按客户端创建不同 token。
 4. 扩展 E2E 测试：使用真实 Mihomo / sing-box 二进制校验 YAML/JSON，以及 TUN/DNS/IPv6 场景测试。
 5. 订阅域名与节点域名分别监控可达率、DNS 时间、TLS 握手和下载响应延迟；保护 token 避免进入 HTTP access log、Cloudflare Analytics 或公共错误报告。
+
+### 核心级配置验收
+
+GitHub Actions 的 `client-core` job 使用官方 Mihomo v1.19.30 和 sing-box v1.14.3 Linux 二进制执行配置校验，而非仅对 Python 字符串断言。该校验不建立真实节点连接，不能替代在设备上的 Rule/TUN 和移动网络验收。
+

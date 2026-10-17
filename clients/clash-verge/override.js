@@ -72,7 +72,7 @@ function main(config) {
 
   const privateRules = [
     ...privateDomains.map(domain => `DOMAIN-SUFFIX,${domain},DIRECT`),
-    ...privateIps.map(cidr => `IP-CIDR,${cidr},DIRECT,no-resolve`)
+    ...privateIps.map(cidr => `${cidr.includes(":") ? "IP-CIDR6" : "IP-CIDR"},${cidr},DIRECT,no-resolve`)
   ];
   const overseasRules = foreignDomains.map(domain => `DOMAIN-SUFFIX,${domain},${PROXY}`);
   const domesticRules = domesticDomains.map(domain => `DOMAIN-SUFFIX,${domain},DIRECT`);

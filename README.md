@@ -150,6 +150,15 @@ sudo autonode revoke-user alice
 
 具体改造方案、DNS 解析顺序、规则源、兼容性边界、存量升级与验收方法参见 [智能分流与订阅优化指南](docs/SMART_ROUTING.md)。
 
+### 分流配置如何使用
+
+- **Clash Verge Rev / Mihomo：** 直接导入 AutoNode 统一订阅，默认内置 `kejishu-PROXY`、CN MRS 规则集、智能 DNS；不需要扩展脚本。
+- **sing-box 1.14+：** 通过原订阅的 sing-box 内容协商获取原生 JSON，内置 SRS 规则；须使用支持完整 JSON 配置导入的客户端。
+- **v2rayN / v2rayNG（Xray 核心）：** 使用原订阅导入 VLESS 节点，另将 [Xray routing.json](clients/v2rayn/routing.json) 配到客户端路由设置中；该 JSON 是路由对象，不是节点订阅，代理出站 tag 必须为 `proxy`、直连为 `direct`。
+- **Shadowrocket：** 使用原订阅导入 VLESS 节点，再导入 [Shadowrocket 规则模板](clients/shadowrocket/kejishu.conf)；具体分流设置取决于客户端支持的版本，`PROXY` 对应其当前节点策略。
+
+**已有节点升级：** 在完整 Git 仓库根目录运行 `git pull --ff-only && sudo bash upgrade.sh`。升级器先备份代码与状态、执行测试、生成真实用户配置做预检查，重启后检查健康状态，失败自动回滚。**不要在已安装的 VPS 上重复运行 `install.sh` 或删除凭据。**
+
 ## 运维与诊断
 
 ```bash
@@ -168,7 +177,7 @@ sudo curl -fsS http://127.0.0.1:18080/healthz
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m compileall -q autonode
-bash -n install.sh uninstall.sh
+bash -n install.sh upgrade.sh uninstall.sh
 node --check clients/clash-verge/override.js
 node tests/test_override.js
 ```
@@ -187,7 +196,9 @@ autonode/
 ├── docs/SMART_ROUTING.md   # 智能分流/可达性完整优化方案
 ├── tests/test_core.py     # 订阅、用户生命周期测试
 ├── tests/test_routing.py  # 智能分流路由契约测试
+├── tests/test_client_profiles.py # Xray/Shadowrocket 配置契约测试
 ├── tests/test_override.js # 扩展脚本行为测试
+├── upgrade.sh             # 无损升级、备份和自动回滚
 ├── install.sh             # Linux 一键安装器
 ├── uninstall.sh           # 卸载入口
 └── .github/workflows/ci.yml

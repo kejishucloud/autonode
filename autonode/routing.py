@@ -54,7 +54,10 @@ def mihomo_rule_providers() -> dict[str, dict]:
 def mihomo_rules() -> list[str]:
     """按顺序处理：私有网络、海外例外、国内常见域、远程 CN 域/IP、海外兜底。"""
     rules = [f"DOMAIN-SUFFIX,{name},DIRECT" for name in PRIVATE_DOMAIN_SUFFIXES]
-    rules += [f"IP-CIDR,{cidr},DIRECT,no-resolve" for cidr in PRIVATE_IP_CIDRS]
+    rules += [
+        f"{'IP-CIDR6' if ':' in cidr else 'IP-CIDR'},{cidr},DIRECT,no-resolve"
+        for cidr in PRIVATE_IP_CIDRS
+    ]
     rules += [f"DOMAIN-SUFFIX,{name},{PROXY_GROUP}" for name in OVERSEAS_DOMAINS]
     rules += [f"DOMAIN-SUFFIX,{name},DIRECT" for name in DOMESTIC_DOMAINS]
     rules += [
