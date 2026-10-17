@@ -92,8 +92,8 @@ sudo systemctl status autonode-sub --no-pager
 
 - `route.rule_set` 定义 CN 域名和 CN IP 规则集；`update_interval=1d`。
 - `experimental.cache_file.enabled=true`，用于远程规则缓存，断网时尽可能复用本地缓存。
-- `download_detour: AutoNode` 使规则集经已有节点下载，兼容采用此字段的 sing-box 版本。
-- `download_detour` 已在 sing-box 1.14 标记弃用；未来 1.16 版本移除时需迁移至 `http_client`。**升级内核前使用 `sing-box check -c <client.json>` 预先验证，不能保证所有 sing-box 版本通用。**
+- `download_detour: AutoNode` 使规则集经已有节点下载，用于显式指定规则集下载链路，要求 sing-box 1.14+。
+- `download_detour` 已在 sing-box 1.14 弃用，AutoNode 改用其推荐的 `http_client` 字段。**此配置要求 sing-box 客户端 1.14+，升级内核前使用 `sing-box check -c <client.json>` 预先验证。**
 - 是否支持通过远程 URL 导入完整 JSON，取决于具体 GUI；某些 GUI 只能导入节点 URI。
 
 ## 7. v2rayN / v2rayNG / Shadowrocket 的规则
@@ -156,7 +156,7 @@ sing-box check -c /path/to/client.json
 
 ## 10. 后续演进
 
-1. 将 sing-box 远程下载迁移到新版 `http_client`（按客户端版本兼容，而非服务端版本）。
+1. 持续跟进 sing-box 版本变更，并对 1.14+ 原生 JSON 执行真实内核校验；如需兼容旧 1.12–1.13，需另外设计按版本协商而非复用一个 JSON。
 2. 加入规则集镜像源的可用性探测及离线初始缓存，避免用户首次启动就需要连接 GitHub。
 3. 可为每个订阅增加可选分流档位（默认智能、全局、直连）；但要维持单一用户 URL 契约，避免强制按客户端创建不同 token。
 4. 扩展 E2E 测试：使用真实 Mihomo / sing-box 二进制校验 YAML/JSON，以及 TUN/DNS/IPv6 场景测试。
