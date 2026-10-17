@@ -86,7 +86,7 @@ class RoutingContractTest(unittest.TestCase):
         for item in route["rule_set"]:
             self.assertTrue(item["url"].endswith(".srs"))
             self.assertEqual(item["format"], "binary")
-            self.assertEqual(item["download_detour"], "AutoNode")
+            self.assertEqual(item["http_client"], {"detour": "AutoNode"})
             self.assertEqual(item["update_interval"], "1d")
         self.assertEqual(route["rules"][0]["outbound"], "direct")
         self.assertEqual(route["rules"][2]["outbound"], "AutoNode")
