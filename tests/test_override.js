@@ -28,6 +28,8 @@ assert(updated.rules.indexOf("DOMAIN-SUFFIX,github.com,kejishu-PROXY") < updated
 assert.equal(updated["rule-providers"].kejishu_cn_ip.interval, 86400);
 assert.equal(updated["rule-providers"].kejishu_cn_ip.behavior, "ipcidr");
 assert.equal(updated.dns["enhanced-mode"], "fake-ip");
+assert(updated.rules.includes("IP-CIDR6,fc00::/7,DIRECT,no-resolve"));
+assert(updated.rules.includes("IP-CIDR6,fe80::/10,DIRECT,no-resolve"));
 assert(updated.dns.fallback.every(x => x.endsWith("#kejishu-PROXY")));
 
 // 重复运行脚本不得创建重复分组 / MATCH / 规则。
