@@ -17,6 +17,8 @@
 | 二维码 | 为用户生成订阅二维码与标准 VLESS 节点二维码 |
 | 域名可选 | 域名 + Caddy HTTPS 订阅；没有域名时可以使用公网 IP 订阅 |
 | 配置安全 | 验证配置、限制凭证文件权限，更新失败尽可能回滚 |
+| 智能分流 | Mihomo / sing-box 订阅内置国内网站和 IP 直连、局域网直连、海外服务优先代理 |
+| 规则集更新 | Mihomo MRS / sing-box SRS 每 24 小时更新，DNS 国内优先、海外回退经代理 |
 
 ### 客户端兼容性
 
@@ -25,7 +27,9 @@
 | Clash Verge Rev / Mihomo | Windows / macOS / Linux | Mihomo YAML |
 | v2rayN / v2rayNG | Windows / Android | Base64 VLESS |
 | Shadowrocket | iOS | Base64 VLESS |
-| sing-box | 多平台 | sing-box JSON（客户端是否接受远程 JSON 订阅取决于具体 GUI） |
+| sing-box 1.14+ | 多平台 | 带 SRS 智能分流的 sing-box JSON（GUI 是否支持远程 JSON 取决于软件） |
+
+**重要的客户端能力边界：** Mihomo 与 sing-box 格式包含分流规则；v2rayN/v2rayNG/Shadowrocket 取得的是 Base64 VLESS 节点，需要在各客户端独立配置分流策略。规则下载间隔为 24 小时，但首次下载和更新均要求代理节点可用。
 
 所有用户使用同一条节点协议 **VLESS + REALITY（Vision）**，客户端必须具备相应协议支持。自动识别依赖客户端发送的请求头；部分软件或旧版本需要手动配置订阅 `User-Agent`，或扫描标准 VLESS 节点二维码导入。
 
@@ -138,6 +142,14 @@ sudo autonode revoke-user alice
 
 用户名由字母、数字、下划线或连字符组成，最多 32 字符。
 
+## 智能分流与国内订阅优化
+
+新版 Mihomo 订阅自动生成 `kejishu-PROXY`、国内 MRS 规则集及 fake-ip/DNS 分流；新版 sing-box 1.14+ 客户端 JSON 采用 SRS 与独立 HTTP 下载链路。局域网优先直连、常见海外服务优先代理、国内域名/IP 直连，最后全部走代理。
+
+**新用户直接使用原有统一订阅链接即可，无须手动贴脚本。** 旧版及第三方 Clash Verge 配置可使用 [扩展脚本](clients/clash-verge/override.js) 补充规则，但不要对新配置重复叠加。若大陆网络无法访问 Cloudflare Workers 订阅 URL，必须先解决订阅域名自身的可达性，客户端规则无法解决首次下载问题。
+
+具体改造方案、DNS 解析顺序、规则源、兼容性边界、存量升级与验收方法参见 [智能分流与订阅优化指南](docs/SMART_ROUTING.md)。
+
 ## 运维与诊断
 
 ```bash
@@ -157,6 +169,8 @@ sudo curl -fsS http://127.0.0.1:18080/healthz
 python3 -m unittest discover -s tests -v
 python3 -m compileall -q autonode
 bash -n install.sh uninstall.sh
+node --check clients/clash-verge/override.js
+node tests/test_override.js
 ```
 
 ## 项目结构
@@ -167,8 +181,13 @@ autonode/
 │   ├── cli.py              # 部署、用户管理与二维码生成
 │   ├── core.py             # 用户模型与订阅配置生成
 │   └── server.py           # 一个 URL 的多客户端内容协商
+├── autonode/routing.py    # 智能路由、DNS 与规则提供者
+├── clients/clash-verge/override.js # 旧版 Clash Verge 扩展脚本
 ├── docs/DEPLOYMENT.md     # 从零部署及运维指南
-├── tests/test_core.py     # 单元测试
+├── docs/SMART_ROUTING.md   # 智能分流/可达性完整优化方案
+├── tests/test_core.py     # 订阅、用户生命周期测试
+├── tests/test_routing.py  # 智能分流路由契约测试
+├── tests/test_override.js # 扩展脚本行为测试
 ├── install.sh             # Linux 一键安装器
 ├── uninstall.sh           # 卸载入口
 └── .github/workflows/ci.yml
