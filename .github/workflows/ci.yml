@@ -24,3 +24,38 @@ jobs:
         run: node tests/test_override.js
       - name: Shell syntax
         run: bash -n install.sh uninstall.sh
+  client-core:
+    name: Validate real client cores
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare offline test configurations
+        run: |
+          python -m tests.generate_client_fixtures /tmp/autonode-fixtures
+      - name: Install official Mihomo v1.19.30
+        run: |
+          curl -fL --retry 3 --connect-timeout 10 --max-time 120 \
+            https://github.com/MetaCubeX/mihomo/releases/download/v1.19.30/mihomo-linux-amd64-v1.19.30.gz \
+            -o /tmp/mihomo.gz
+          gzip -d /tmp/mihomo.gz
+          chmod +x /tmp/mihomo
+          /tmp/mihomo -v
+      - name: Install official sing-box v1.14.3
+        run: |
+          curl -fL --retry 3 --connect-timeout 10 --max-time 120 \
+            https://github.com/SagerNet/sing-box/releases/download/v1.14.3/sing-box-1.14.3-linux-amd64.tar.gz \
+            -o /tmp/sing-box.tar.gz
+          tar -xzf /tmp/sing-box.tar.gz -C /tmp/
+          /tmp/sing-box-1.14.3-linux-amd64/sing-box version
+      - name: Validate Mihomo YAML in actual core
+        run: |
+          mkdir -p /tmp/autonode-mihomo
+          /tmp/mihomo -t -f /tmp/autonode-fixtures/mihomo.yaml -d /tmp/autonode-mihomo
+      - name: Validate sing-box client and VPS server JSON in actual core
+        run: |
+          /tmp/sing-box-1.14.3-linux-amd64/sing-box check -c /tmp/autonode-fixtures/singbox.json
+          /tmp/sing-box-1.14.3-linux-amd64/sing-box check -c /tmp/autonode-fixtures/singbox-server.json
